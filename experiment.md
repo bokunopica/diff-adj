@@ -7,6 +7,8 @@ lr=1e-4, ts=12.5k, data=30k
 2. 换TextEncoder RadBert
 3. 换TextEncoder CXR-BERT-specialized
 4. 换TextEncoder MedCLIP
+    - https://huggingface.co/docs/transformers/model_doc/clip#clip
+    - https://zhuanlan.zhihu.com/p/603168346
 
 5. *增加私有数据 再前三者中最好的模型上喂
 
