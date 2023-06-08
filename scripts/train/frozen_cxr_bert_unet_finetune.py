@@ -40,8 +40,7 @@ from tqdm.auto import tqdm
 from transformers import (
     CLIPTextModel, 
     CLIPTokenizer, 
-    BertForMaskedLM, 
-    BertModel,
+    AutoModel,
     AutoTokenizer,
 )
 from transformers.utils import ContextManagers
@@ -66,6 +65,8 @@ logger = get_logger(__name__, log_level="INFO")
 DATASET_NAME_MAPPING = {
     "lambdalabs/pokemon-blip-captions": ("image", "text"),
 }
+
+bert_model_url = "microsoft/BiomedVLP-CXR-BERT-specialized"
 
 
 def log_validation(vae, text_encoder, tokenizer, unet, args, accelerator, weight_dtype, epoch):
@@ -473,7 +474,12 @@ def main():
     # tokenizer = CLIPTokenizer.from_pretrained(
     #     args.pretrained_model_name_or_path, subfolder="tokenizer", revision=args.revision
     # )
-    tokenizer = AutoTokenizer.from_pretrained("pretrained_models/RadBERT", revision=args.revision)
+    tokenizer = AutoTokenizer.from_pretrained(
+        bert_model_url, 
+        revision=args.revision, 
+        trust_remote_code=True,
+        model_max_length=256,
+    )
 
     def deepspeed_zero_init_disabled_context_manager():
         """
@@ -499,7 +505,7 @@ def main():
         #     args.pretrained_model_name_or_path, subfolder="text_encoder", revision=args.revision
         # )
         # text_encoder = BertForMaskedLM.from_pretrained("StanfordAIMI/RadBERT", revision=args.revision)
-        text_encoder = BertModel.from_pretrained("pretrained_models/RadBERT", revision=args.revision)
+        text_encoder = AutoModel.from_pretrained(bert_model_url, trust_remote_code=True, revision=args.revision)
         vae = AutoencoderKL.from_pretrained(
             args.pretrained_model_name_or_path, subfolder="vae", revision=args.revision
         )
@@ -686,7 +692,11 @@ def main():
                     f"Caption column `{caption_column}` should contain either strings or lists of strings."
                 )
         inputs = tokenizer(
-            captions, max_length=tokenizer.model_max_length, padding="max_length", truncation=True, return_tensors="pt"
+            captions, 
+            max_length=tokenizer.model_max_length, 
+            padding="max_length", 
+            truncation=True, 
+            return_tensors="pt",
         )
         return inputs.input_ids
 
@@ -855,7 +865,10 @@ def main():
 
                 # Get the text embedding for conditioning
                 # encoder_hidden_states = text_encoder(batch["input_ids"])[0]
-                encoder_hidden_states = text_encoder(batch["input_ids"]).last_hidden_state
+                encoder_hidden_states = text_encoder(
+                    batch["input_ids"],
+                    attention_mask=None
+                ).last_hidden_state
 
                 # Get the target for loss depending on the prediction type
                 if noise_scheduler.config.prediction_type == "epsilon":
