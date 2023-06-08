@@ -34,3 +34,9 @@ lr=1e-4, ts=12.5k, data=30k
 1. 症状-真实图像和生成图像对
 2. macro-averaged CheXpert@10 scores
 3. 医生评分表
+
+
+
+### 后续工作
+1. latent channels 4 -> 8
+2. rgb channels  3 -> 1
