@@ -37,7 +37,13 @@ from huggingface_hub import create_repo, upload_folder
 from packaging import version
 from torchvision import transforms
 from tqdm.auto import tqdm
-from transformers import CLIPTextModel, CLIPTokenizer
+from transformers import (
+    CLIPTextModel, 
+    CLIPTokenizer, 
+    BertForMaskedLM, 
+    BertModel,
+    AutoTokenizer,
+)
 from transformers.utils import ContextManagers
 
 import diffusers
@@ -72,6 +78,7 @@ def log_validation(vae, text_encoder, tokenizer, unet, args, accelerator, weight
         tokenizer=tokenizer,
         unet=accelerator.unwrap_model(unet),
         safety_checker=None,
+        requires_safety_checker=False,
         revision=args.revision,
         torch_dtype=weight_dtype,
     )
@@ -408,7 +415,8 @@ def parse_args():
     return args
 
 
-def main(args):
+def main():
+    args = parse_args()
     if args.non_ema_revision is not None:
         deprecate(
             "non_ema_revision!=None",
@@ -462,9 +470,10 @@ def main(args):
 
     # Load scheduler, tokenizer and models.
     noise_scheduler = DDPMScheduler.from_pretrained(args.pretrained_model_name_or_path, subfolder="scheduler")
-    tokenizer = CLIPTokenizer.from_pretrained(
-        args.pretrained_model_name_or_path, subfolder="tokenizer", revision=args.revision
-    )
+    # tokenizer = CLIPTokenizer.from_pretrained(
+    #     args.pretrained_model_name_or_path, subfolder="tokenizer", revision=args.revision
+    # )
+    tokenizer = AutoTokenizer.from_pretrained("pretrained_models/RadBERT", revision=args.revision)
 
     def deepspeed_zero_init_disabled_context_manager():
         """
@@ -486,9 +495,11 @@ def main(args):
     # `from_pretrained` So CLIPTextModel and AutoencoderKL will not enjoy the parameter sharding
     # across multiple gpus and only UNet2DConditionModel will get ZeRO sharded.
     with ContextManagers(deepspeed_zero_init_disabled_context_manager()):
-        text_encoder = CLIPTextModel.from_pretrained(
-            args.pretrained_model_name_or_path, subfolder="text_encoder", revision=args.revision
-        )
+        # text_encoder = CLIPTextModel.from_pretrained(
+        #     args.pretrained_model_name_or_path, subfolder="text_encoder", revision=args.revision
+        # )
+        # text_encoder = BertForMaskedLM.from_pretrained("StanfordAIMI/RadBERT", revision=args.revision)
+        text_encoder = BertModel.from_pretrained("StanfordAIMI/RadBERT", revision=args.revision)
         vae = AutoencoderKL.from_pretrained(
             args.pretrained_model_name_or_path, subfolder="vae", revision=args.revision
         )
@@ -821,7 +832,6 @@ def main(args):
                 # Convert images to latent space
                 latents = vae.encode(batch["pixel_values"].to(weight_dtype)).latent_dist.sample()
                 latents = latents * vae.config.scaling_factor
-
                 # Sample noise that we'll add to the latents
                 noise = torch.randn_like(latents)
                 if args.noise_offset:
@@ -844,7 +854,8 @@ def main(args):
                     noisy_latents = noise_scheduler.add_noise(latents, noise, timesteps)
 
                 # Get the text embedding for conditioning
-                encoder_hidden_states = text_encoder(batch["input_ids"])[0]
+                # encoder_hidden_states = text_encoder(batch["input_ids"])[0]
+                encoder_hidden_states = text_encoder(batch["input_ids"]).last_hidden_state
 
                 # Get the target for loss depending on the prediction type
                 if noise_scheduler.config.prediction_type == "epsilon":
@@ -940,6 +951,8 @@ def main(args):
             vae=vae,
             unet=unet,
             revision=args.revision,
+            safety_checker=None,
+            requires_safety_checker=False,
         )
         pipeline.save_pretrained(args.output_dir)
 
@@ -955,7 +968,4 @@ def main(args):
 
 
 if __name__ == "__main__":
-    argument_dict = {}
-    args = parse_args()
-    print(args.__dict__)
-    # main(args)
+    main()
