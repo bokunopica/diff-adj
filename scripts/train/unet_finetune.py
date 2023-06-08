@@ -19,6 +19,7 @@ import math
 import os
 import random
 from pathlib import Path
+import sys
 
 import accelerate
 import datasets
@@ -407,9 +408,13 @@ def parse_args():
     return args
 
 
-def main():
-    args = parse_args()
+def customize_args(args, argument_dict):
+    for key, value in argument_dict.items():
+        setattr(args, key, value)
+    return args
 
+
+def main(args):
     if args.non_ema_revision is not None:
         deprecate(
             "non_ema_revision!=None",
@@ -956,4 +961,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    argument_dict = {}
+    args = parse_args()
+    print(args.__dict__)
+    # main(args)
