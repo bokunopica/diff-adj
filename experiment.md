@@ -2,8 +2,8 @@
 lr=1e-4, ts=12.5k, data=30k
 1. 微调Stable Diffusion [已调通]
 2. 换TextEncoder RadBert [已调通]
-3. 换TextEncoder CXR-BERT-specialized
-4. 换TextEncoder MedCLIP
+3. 换TextEncoder CXR-BERT-specialized [已调通]
+4. 换TextEncoder MedCLIP [已调通]
     - https://huggingface.co/docs/transformers/model_doc/clip#clip
     - https://zhuanlan.zhihu.com/p/603168346
 
