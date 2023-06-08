@@ -1,7 +1,6 @@
 import os
 import pandas as pd
 import json
-from tqdm import trange
 
 def get_impression(impression_file):
     result = ""
@@ -56,20 +55,14 @@ def main():
     metadata_df = metadata_df[metadata_df['ViewPosition'] == 'PA']
     dicom_id_list = metadata_df['dicom_id'].to_list()
 
-    dir_obj_list = []
     for base_dir, dir_name_list, file_name_list in os.walk(raw_input_dir):
-        dir_obj_list.append([base_dir, file_name_list])
-    
-    for i in trange(len(dir_obj_list)):
-        dir_obj = dir_obj_list[i]
-        base_dir = dir_obj[0]
-        file_name_list = dir_obj[1]
         if base_dir.find("/p19/") == -1:
             output_dir = output_dir_train
         else:
             output_dir = output_dir_valid
         
         for file_name in file_name_list:
+            print(base_dir, file_name, end='\r')
             if file_name.endswith('jpg'):
                 dicom_id = file_name.split('.')[0]
                 if dicom_id not in dicom_id_list:
