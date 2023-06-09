@@ -3,7 +3,7 @@ from diffusers import StableDiffusionPipeline
 
 # model_id = "CompVis/stable-diffusion-v1-4"
 results_folder = "results"
-model_folder = "pretrained_models/sd-finetune"
+model_folder = "/home/qianq/mycodes/diff-adj/pretrained_models/sd-finetune"
 device = "cuda"
 
 
