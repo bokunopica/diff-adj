@@ -1,6 +1,7 @@
 import os
 import pandas as pd
 import json
+from transformers import CLIPTokenizer
 
 def get_impression(impression_file):
     result = ""
@@ -18,12 +19,11 @@ def remove_metadata(output_dir):
     if os.path.exists(file_path):
         os.remove(file_path)
 
-def write_metadata(base_dir, file_name, output_dir):
-    report_txt_path = base_dir + ".txt"
+def write_metadata(file_name, output_dir, impression):
     output_meta_dir = f"{output_dir}metadata.jsonl"
     metadata = {
         "file_name": file_name,
-        "impression": get_impression(report_txt_path)
+        "impression": impression
     }
     with open(output_meta_dir, 'a') as f:
         f.write(json.dumps(metadata))
@@ -50,6 +50,11 @@ def main():
     remove_metadata(output_dir_train)
     remove_metadata(output_dir_valid)
 
+    tokenizer = CLIPTokenizer.from_pretrained(
+        "CompVis/stable-diffusion-v1-4", 
+        subfolder="tokenizer",
+    )
+
     # pa meta csv
     metadata_df = pd.read_csv(meta_csv_location)
     metadata_df = metadata_df[metadata_df['ViewPosition'] == 'PA']
@@ -68,7 +73,13 @@ def main():
                 if dicom_id not in dicom_id_list:
                     continue
                 meta_base_dir = base_dir.replace('/mimic-cxr-jpg/2.0.0/', '/mimic-cxr-reports/')
-                write_metadata(meta_base_dir, file_name, output_dir)
+                report_txt_path = meta_base_dir + ".txt"
+                impression = get_impression(report_txt_path)
+                outputs = tokenizer(impression)
+                len_token =  len(outputs['input_ids'])
+                if len_token < 7 or len_token > 77:
+                    continue
+                write_metadata(file_name, output_dir, impression)
                 write_to_output(base_dir, file_name, output_dir)
 
 
