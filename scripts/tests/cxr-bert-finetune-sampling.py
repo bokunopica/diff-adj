@@ -1,6 +1,5 @@
 from diffusers import AutoencoderKL, StableDiffusionPipeline, UNet2DConditionModel
-from transformers import BertTokenizer, AutoModel, AutoTokenizer
-from transformers.tokenization_utils import PreTrainedTokenizer
+from transformers import AutoTokenizer, AutoModel
 
 model_id = "CompVis/stable-diffusion-v1-4"
 results_folder = "results"
@@ -8,20 +7,19 @@ device = "cuda"
 
 
 # components reload
-# text_encoder = AutoModel.from_pretrained(
-#     "pretrained_models/RadBERT", trust_remote_code=True
-# )
+text_encoder = AutoModel.from_pretrained(
+    "pretrained_models/cxr-bert-sd-finetune/text_encoder", trust_remote_code=True
+)
 
-# tokenizer = AutoTokenizer.from_pretrained("StanfordAIMI/RadBERT")
-
-tokenizer = AutoTokenizer.from_pretrained("cambridgeltl/SapBERT-from-PubMedBERT-fulltext")
-
-text_encoder = AutoModel.from_pretrained("cambridgeltl/SapBERT-from-PubMedBERT-fulltext")
+tokenizer = AutoTokenizer.from_pretrained(
+    "pretrained_models/cxr-bert-sd-finetune/tokenizer", trust_remote_code=True
+)
 
 vae = AutoencoderKL.from_pretrained(model_id, subfolder="vae")
 
 unet = UNet2DConditionModel.from_pretrained(
-    "pretrained_models/radbert-sd-finetune/checkpoint-12500/unet",
+    "pretrained_models/cxr-bert-sd-finetune/unet",
+    subfolder="unet",
 )
 
 pipeline = StableDiffusionPipeline.from_pretrained(
@@ -41,4 +39,5 @@ prompt = "Focal consolidation at the left lung base, possibly representing aspir
 
 for i in range(10):
     image = pipeline(prompt=prompt, height=512, width=512).images[0]
-    image.save(f"{results_folder}/radbert-sd-finetune/demo_{'%02d'%i}.png")
+    image.save(f"{results_folder}/cxr-bert-sd-finetune/demo_{'%02d'%i}.png")
+# sample_size = model.config.sample_size
