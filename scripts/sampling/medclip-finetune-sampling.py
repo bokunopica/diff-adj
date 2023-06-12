@@ -65,29 +65,18 @@ medclip_model = MedCLIPModelV2(checkpoint="pretrained_models/medclip")
 text_model = medclip_model.text_model
 
 # components reload
-# tokenizer = BertTokenizer.from_pretrained(
-#     # f"pretrained_models/{pretrained_model}/tokenizer",
-#     'emilyalsentzer/Bio_ClinicalBERT',
-#     trust_remote_code=True,
-# )
 tokenizer = text_model.tokenizer
+tokenizer.model_max_length = 256
 
-# text_encoder = AutoModel.from_pretrained(
-#     # f"pretrained_models/{pretrained_model}/text_encoder",
-#     'emilyalsentzer/Bio_ClinicalBERT',
-#     trust_remote_code=True,
-# )
 text_encoder = text_model.model
 
 vae = AutoencoderKL.from_pretrained(
-    # f"pretrained_models/{pretrained_model}/vae",
-    base_model_id,
-    subfolder="vae",
+    f"pretrained_models/{pretrained_model}/vae",
 )
 
-# unet = UNet2DConditionModel.from_pretrained(
-#     f"pretrained_models/{pretrained_model}/unet",
-# )
+unet = UNet2DConditionModel.from_pretrained(
+    f"pretrained_models/{pretrained_model}/unet",
+)
 
 pipeline = StableDiffusionPipeline.from_pretrained(
     base_model_id,
