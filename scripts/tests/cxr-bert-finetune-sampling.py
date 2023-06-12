@@ -1,29 +1,35 @@
+import os
 from diffusers import AutoencoderKL, StableDiffusionPipeline, UNet2DConditionModel
 from transformers import AutoTokenizer, AutoModel
 
-model_id = "CompVis/stable-diffusion-v1-4"
+base_model_id = "CompVis/stable-diffusion-v1-4"
+pretrained_model = "cxr-bert-sd-finetune"
 results_folder = "results"
 device = "cuda"
 
 
 # components reload
-text_encoder = AutoModel.from_pretrained(
-    "pretrained_models/cxr-bert-sd-finetune/text_encoder", trust_remote_code=True
-)
-
 tokenizer = AutoTokenizer.from_pretrained(
-    "pretrained_models/cxr-bert-sd-finetune/tokenizer", trust_remote_code=True
+    f"pretrained_models/{pretrained_model}/tokenizer",
+    trust_remote_code=True,
 )
 
-vae = AutoencoderKL.from_pretrained(model_id, subfolder="vae")
+text_encoder = AutoModel.from_pretrained(
+    f"pretrained_models/{pretrained_model}/text_encoder",
+    trust_remote_code=True,
+)
+
+vae = AutoencoderKL.from_pretrained(
+    f"pretrained_models/{pretrained_model}/vae",
+    subfolder="vae",
+)
 
 unet = UNet2DConditionModel.from_pretrained(
-    "pretrained_models/cxr-bert-sd-finetune/unet",
-    subfolder="unet",
+    f"pretrained_models/{pretrained_model}/unet",
 )
 
 pipeline = StableDiffusionPipeline.from_pretrained(
-    model_id,
+    base_model_id,
     tokenizer=tokenizer,
     text_encoder=text_encoder,
     vae=vae,
@@ -35,6 +41,10 @@ pipeline = pipeline.to(device)
 
 prompt = "Focal consolidation at the left lung base, possibly representing aspiration or pneumonia.  Central vascular engorgement."
 # prompt = "Severe cardiomegaly is unchanged."
+
+if not os.exists(f"{results_folder}/{pretrained_model}"):
+    os.mkdir(f"{results_folder}/{pretrained_model}")
+
 
 
 for i in range(10):

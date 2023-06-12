@@ -1,31 +1,35 @@
+import os
 from diffusers import AutoencoderKL, StableDiffusionPipeline, UNet2DConditionModel
-from transformers import BertTokenizer, AutoModel, AutoTokenizer
-from transformers.tokenization_utils import PreTrainedTokenizer
+from transformers import AutoModel, BertTokenizer
 
-model_id = "CompVis/stable-diffusion-v1-4"
+base_model_id = "CompVis/stable-diffusion-v1-4"
+pretrained_model = "radbert-sd-finetune"
 results_folder = "results"
 device = "cuda"
 
 
 # components reload
-# text_encoder = AutoModel.from_pretrained(
-#     "pretrained_models/RadBERT", trust_remote_code=True
-# )
+tokenizer = BertTokenizer.from_pretrained(
+    f"pretrained_models/{pretrained_model}/tokenizer",
+    trust_remote_code=True,
+)
 
-# tokenizer = AutoTokenizer.from_pretrained("StanfordAIMI/RadBERT")
+text_encoder = AutoModel.from_pretrained(
+    f"pretrained_models/{pretrained_model}/text_encoder",
+    trust_remote_code=True,
+)
 
-tokenizer = AutoTokenizer.from_pretrained("cambridgeltl/SapBERT-from-PubMedBERT-fulltext")
-
-text_encoder = AutoModel.from_pretrained("cambridgeltl/SapBERT-from-PubMedBERT-fulltext")
-
-vae = AutoencoderKL.from_pretrained(model_id, subfolder="vae")
+vae = AutoencoderKL.from_pretrained(
+    f"pretrained_models/{pretrained_model}/vae",
+    subfolder="vae",
+)
 
 unet = UNet2DConditionModel.from_pretrained(
-    "pretrained_models/radbert-sd-finetune/checkpoint-12500/unet",
+    f"pretrained_models/{pretrained_model}/unet",
 )
 
 pipeline = StableDiffusionPipeline.from_pretrained(
-    model_id,
+    base_model_id,
     tokenizer=tokenizer,
     text_encoder=text_encoder,
     vae=vae,
@@ -38,7 +42,9 @@ pipeline = pipeline.to(device)
 prompt = "Focal consolidation at the left lung base, possibly representing aspiration or pneumonia.  Central vascular engorgement."
 # prompt = "Severe cardiomegaly is unchanged."
 
+if not os.path.exists(f"{results_folder}/{pretrained_model}"):
+    os.mkdir(f"{results_folder}/{pretrained_model}")
 
 for i in range(10):
     image = pipeline(prompt=prompt, height=512, width=512).images[0]
-    image.save(f"{results_folder}/radbert-sd-finetune/demo_{'%02d'%i}.png")
+    image.save(f"{results_folder}/{pretrained_model}/demo_{'%02d'%i}.png")

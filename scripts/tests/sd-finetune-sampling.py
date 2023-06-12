@@ -1,19 +1,23 @@
-import torch
+import os
 from diffusers import StableDiffusionPipeline
 
 # model_id = "CompVis/stable-diffusion-v1-4"
 results_folder = "results"
-model_folder = "/home/qianq/mycodes/diff-adj/pretrained_models/sd-finetune"
+pretrained_model = "sd-finetune"
 device = "cuda"
 
 
 
-pipe = StableDiffusionPipeline.from_pretrained(model_folder)
+pipe = StableDiffusionPipeline.from_pretrained(
+    f"pretrained_models/{pretrained_model}"
+)
 pipe = pipe.to(device)
 
 prompt = "Focal consolidation at the left lung base, possibly representing aspiration or pneumonia.  Central vascular engorgement."
 # prompt = "Severe cardiomegaly is unchanged."
 
+if not os.path.exists(f"{results_folder}/{pretrained_model}"):
+    os.mkdir(f"{results_folder}/{pretrained_model}")
 
 for i in range(10):
     image = pipe(prompt=prompt, height=512, width=512).images[0] 

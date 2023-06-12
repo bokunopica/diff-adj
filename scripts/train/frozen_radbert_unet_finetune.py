@@ -38,11 +38,8 @@ from packaging import version
 from torchvision import transforms
 from tqdm.auto import tqdm
 from transformers import (
-    CLIPTextModel, 
-    CLIPTokenizer, 
-    BertForMaskedLM, 
+    BertTokenizer,
     BertModel,
-    AutoTokenizer,
 )
 from transformers.utils import ContextManagers
 
@@ -473,7 +470,11 @@ def main():
     # tokenizer = CLIPTokenizer.from_pretrained(
     #     args.pretrained_model_name_or_path, subfolder="tokenizer", revision=args.revision
     # )
-    tokenizer = AutoTokenizer.from_pretrained("pretrained_models/RadBERT", revision=args.revision)
+    tokenizer = BertTokenizer.from_pretrained(
+        "pretrained_models/RadBERT", 
+        revision=args.revision, 
+        trust_remote_code=True,
+    )
 
     def deepspeed_zero_init_disabled_context_manager():
         """
@@ -498,8 +499,11 @@ def main():
         # text_encoder = CLIPTextModel.from_pretrained(
         #     args.pretrained_model_name_or_path, subfolder="text_encoder", revision=args.revision
         # )
-        # text_encoder = BertForMaskedLM.from_pretrained("StanfordAIMI/RadBERT", revision=args.revision)
-        text_encoder = BertModel.from_pretrained("pretrained_models/RadBERT", revision=args.revision)
+        text_encoder = BertModel.from_pretrained(
+            "pretrained_models/RadBERT", 
+            revision=args.revision, 
+            trust_remote_code=True,
+        )
         vae = AutoencoderKL.from_pretrained(
             args.pretrained_model_name_or_path, subfolder="vae", revision=args.revision
         )
