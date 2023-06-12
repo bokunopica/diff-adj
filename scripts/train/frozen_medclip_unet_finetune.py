@@ -28,6 +28,7 @@ import torch
 import torch.nn.functional as F
 import torch.utils.checkpoint
 import transformers
+from torch import nn
 from accelerate import Accelerator
 from accelerate.logging import get_logger
 from accelerate.state import AcceleratorState
@@ -37,14 +38,17 @@ from huggingface_hub import create_repo, upload_folder
 from packaging import version
 from torchvision import transforms
 from tqdm.auto import tqdm
-# from transformers import (
-#     CLIPTextModel, 
-#     CLIPTokenizer, 
-#     BertForMaskedLM, 
-#     BertModel,
-#     AutoTokenizer,
-# )
-from medclip import MedCLIPTextModel
+from transformers import (
+    AutoModel,
+    BertTokenizer,
+)
+from medclip import (
+    constants,
+    MedCLIPTextModel,
+    MedCLIPModel,
+    MedCLIPVisionModel,
+    MedCLIPVisionModelViT,
+)
 from transformers.utils import ContextManagers
 from transformers.modeling_outputs import BaseModelOutputWithPooling
 import diffusers
@@ -59,23 +63,47 @@ if is_wandb_available():
     import wandb
 
 class MedCLIPTextModelV2(MedCLIPTextModel):
-    def forward(self, input_ids, attention_mask):
-        output = self.model(input_ids=input_ids, attention_mask=attention_mask)
-        # take the average of last four layers
-        # last_hidden_states = torch.stack(output['hidden_states'][-self.last_n_layer:]) # n_layer, batch, seqlen, emb_dim
-        # embed = last_hidden_states.permute(1,0,2,3)
-        # embed = embed.mean(1).mean(1) # pooling
+    def __init__(
+        self, bert_type=constants.BERT_TYPE, proj_dim=512, proj_bias=False
+    ) -> None:
+        super().__init__()
+        self.bert_type = bert_type
+        self.last_n_layer = 4
+        self.model = AutoModel.from_pretrained(
+            self.bert_type, output_hidden_states=True
+        )
+        # this tokenizer is actually not used
+        self.tokenizer = BertTokenizer.from_pretrained(self.bert_type)
+        self.projection_head = nn.Linear(768, proj_dim, bias=proj_bias)
 
-        # get 1+2+last layer
-        last_hidden_states = torch.stack([output['hidden_states'][1], output['hidden_states'][2], output['hidden_states'][-1]]) # n_layer, batch, seqlen, emb_dim
-        embed = last_hidden_states.permute(1,0,2,3).mean(2).mean(1) # pooling
 
-        # let's take only the last hidden layer
-        # embed = output['pooler_output']
+class MedCLIPModelV2(MedCLIPModel):
+    def __init__(
+        self,
+        vision_cls=MedCLIPVisionModel,
+        checkpoint=None,
+        vision_checkpoint=None,
+        logit_scale_init_value=0.07,
+    ) -> None:
+        super().__init__()
+        text_proj_bias = False
+        assert vision_cls in [
+            MedCLIPVisionModel,
+            MedCLIPVisionModelViT,
+        ], "vision_cls should be one of [MedCLIPVisionModel, MedCLIPVisionModelViT]"
 
-        embed = self.projection_head(embed)
-        # return embed
-        return last_hidden_states
+        self.vision_model = vision_cls(checkpoint=vision_checkpoint)
+        self.text_model = MedCLIPTextModelV2(proj_bias=False)
+
+        # learnable temperature for contrastive loss
+        self.logit_scale = nn.Parameter(
+            torch.log(torch.tensor(1 / logit_scale_init_value))
+        )
+
+        if checkpoint is not None:
+            state_dict = torch.load(os.path.join(checkpoint, constants.WEIGHTS_NAME))
+            self.load_state_dict(state_dict)
+            print("load model weight from:", checkpoint)
 
 
 # Will error if the minimal version of diffusers is not installed. Remove at your own risks.
@@ -518,11 +546,11 @@ def main():
         # text_encoder = CLIPTextModel.from_pretrained(
         #     args.pretrained_model_name_or_path, subfolder="text_encoder", revision=args.revision
         # )
-        # text_encoder = BertForMaskedLM.from_pretrained("StanfordAIMI/RadBERT", revision=args.revision)
-        # text_encoder = BertModel.from_pretrained("pretrained_models/RadBERT", revision=args.revision)
-        text_encoder = MedCLIPTextModelV2()
-        tokenizer = text_encoder.tokenizer
+        medclip_model = MedCLIPModelV2(checkpoint="pretrained_models/medclip")
+        text_model = medclip_model.text_model
+        tokenizer = text_model.tokenizer
         tokenizer.model_max_length = 256
+        text_encoder = text_model.model
         vae = AutoencoderKL.from_pretrained(
             args.pretrained_model_name_or_path, subfolder="vae", revision=args.revision
         )

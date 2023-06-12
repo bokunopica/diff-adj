@@ -61,10 +61,11 @@ class MedCLIPModelV2(MedCLIPModel):
             print("load model weight from:", checkpoint)
 
 
-medclip_model = MedCLIPModelV2(checkpoint="pretrained_models/medclip")
-text_model = medclip_model.text_model
+
 
 # components reload
+medclip_model = MedCLIPModelV2(checkpoint="pretrained_models/medclip")
+text_model = medclip_model.text_model
 tokenizer = text_model.tokenizer
 tokenizer.model_max_length = 256
 
