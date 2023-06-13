@@ -1,6 +1,7 @@
 import os
 from diffusers import AutoencoderKL, StableDiffusionPipeline, UNet2DConditionModel
 from transformers import AutoTokenizer, AutoModel
+from utils import generate_validation_image
 
 
 
@@ -29,7 +30,7 @@ if __name__ == "__main__":
         f"pretrained_models/{pretrained_model}/unet",
     )
 
-    pipeline = StableDiffusionPipeline.from_pretrained(
+    pipe = StableDiffusionPipeline.from_pretrained(
         base_model_id,
         tokenizer=tokenizer,
         text_encoder=text_encoder,
@@ -38,17 +39,11 @@ if __name__ == "__main__":
         safety_checker=None,
         requires_safety_checker=False,
     )
-    pipeline = pipeline.to(device)
+    pipe = pipe.to(device)
 
-    prompt = "Focal consolidation at the left lung base, possibly representing aspiration or pneumonia.  Central vascular engorgement."
-    # prompt = "Severe cardiomegaly is unchanged."
+    save_path = f"{results_folder}/{pretrained_model}"
 
-    if not os.exists(f"{results_folder}/{pretrained_model}"):
-        os.mkdir(f"{results_folder}/{pretrained_model}")
-
-
-
-    for i in range(10):
-        image = pipeline(prompt=prompt, height=512, width=512).images[0]
-        image.save(f"{results_folder}/cxr-bert-sd-finetune/demo_{'%02d'%i}.png")
-    # sample_size = model.config.sample_size
+    if not os.path.exists(save_path):
+        os.mkdir(save_path)
+        
+    generate_validation_image(pipe, save_path)
