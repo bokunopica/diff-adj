@@ -1,17 +1,21 @@
 import os
 import json
 
-def generate_validation_image(pipe, save_path):
-    validation_path = "/run/media/mimic-pa-512/valid"
-    metadata_path = f"{validation_path}/metadata.jsonl"
-    metadata_list = []
-    with open(metadata_path, 'r') as f:
+def read_jsonl(file_path):
+    result_list = []
+    with open(file_path, 'r') as f:
         f.seek(0, 2)
         eof = f.tell()
         f.seek(0, 0)
         while f.tell() < eof:
-            metadata_list.append(json.loads(f.readline()))
+            result_list.append(json.loads(f.readline()))
+    return result_list
 
+def generate_validation_image(pipe, save_path):
+    validation_path = "/run/media/mimic-pa-512/valid"
+    metadata_path = f"{validation_path}/metadata.jsonl"
+    metadata_list = read_jsonl(metadata_path)
+    
     length = len(metadata_list)
     i = 1
     for metadata in metadata_list:
