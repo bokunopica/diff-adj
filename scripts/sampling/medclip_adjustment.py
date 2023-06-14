@@ -1,17 +1,31 @@
 import os
+from transformers import AutoTokenizer
+from transformers import CLIPProcessor, CLIPImageProcessor
 import torch
 from torch import nn
+from transformers import AutoModel, BertTokenizer
 from medclip import (
     constants,
     MedCLIPTextModel,
     MedCLIPModel,
     MedCLIPVisionModel,
-    MedCLIPVisionModelViT,
+    MedCLIPVisionModelViT
 )
-from diffusers import AutoencoderKL, StableDiffusionPipeline, UNet2DConditionModel
-from transformers import AutoModel, BertTokenizer
-from utils import generate_validation_image
 
+
+
+class MedCLIPProcessorV2(CLIPProcessor):
+    '''
+    A processor that takes input images and texts and provides inputs for
+    `MedCLIPModel`.
+    '''
+    feature_extractor_class = "CLIPFeatureExtractor"
+    tokenizer_class = ("BertTokenizer", "BertTokenizerFast")
+    def __init__(self, image_size):
+        feature_extractor = CLIPImageProcessor(size=image_size)
+        tokenizer = AutoTokenizer.from_pretrained(constants.BERT_TYPE)
+        tokenizer.model_max_length = 77
+        super().__init__(feature_extractor, tokenizer)
 
 
 class MedCLIPTextModelV2(MedCLIPTextModel):
@@ -56,46 +70,3 @@ class MedCLIPModelV2(MedCLIPModel):
             state_dict = torch.load(os.path.join(checkpoint, constants.WEIGHTS_NAME))
             self.load_state_dict(state_dict)
             print("load model weight from:", checkpoint)
-
-
-
-
-if __name__ == "__main__":
-    base_model_id = "CompVis/stable-diffusion-v1-4"
-    pretrained_model = "medclip-finetune"
-    results_folder = "results"
-    device = "cuda:1"
-
-    # components reload
-    medclip_model = MedCLIPModelV2(checkpoint="pretrained_models/medclip-pretrained/medclip")
-    text_model = medclip_model.text_model
-    tokenizer = text_model.tokenizer
-    tokenizer.model_max_length = 256
-
-    text_encoder = text_model.model
-
-    vae = AutoencoderKL.from_pretrained(
-        f"pretrained_models/{pretrained_model}/vae",
-    )
-
-    unet = UNet2DConditionModel.from_pretrained(
-        f"pretrained_models/{pretrained_model}/unet",
-    )
-
-    pipe = StableDiffusionPipeline.from_pretrained(
-        base_model_id,
-        tokenizer=tokenizer,
-        text_encoder=text_encoder,
-        vae=vae,
-        unet=unet,
-        safety_checker=None,
-        requires_safety_checker=False,
-    )
-    pipe = pipe.to(device)
-
-    save_path = f"{results_folder}/{pretrained_model}"
-
-    if not os.path.exists(save_path):
-        os.mkdir(save_path)
-        
-    generate_validation_image(pipe, save_path)

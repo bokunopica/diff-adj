@@ -1,5 +1,9 @@
 import os
-from utils import generate_validation_image, generate_four_validation_image
+from utils import (
+    generate_validation_image,
+    generate_four_validation_image,
+    generate_validation_image_with_medclip,
+)
 from diffusers import StableDiffusionPipeline
 
 if __name__ == "__main__":
@@ -16,5 +20,6 @@ if __name__ == "__main__":
 
     if not os.path.exists(save_path):
         os.mkdir(save_path)
-        
-    generate_four_validation_image(pipe, save_path)
+
+    # generate_four_validation_image(pipe, save_path)
+    generate_validation_image_with_medclip(pipe, save_path, device, each_samples_per_impression=8, length=30)
