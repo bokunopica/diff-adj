@@ -22,4 +22,4 @@ if __name__ == "__main__":
         os.mkdir(save_path)
 
     # generate_four_validation_image(pipe, save_path)
-    generate_validation_image_with_medclip(pipe, save_path, device, each_samples_per_impression=8, length=30)
+    generate_validation_image_with_medclip(pipe, save_path, device, each_samples_per_impression=8, length=1000)

@@ -84,8 +84,6 @@ def generate_validation_image_with_medclip(
     model = MedCLIPModel(vision_cls=MedCLIPVisionModelViT, checkpoint='pretrained_models/medclip/medclip-vit-pretrained')
     model.to('cuda')
 
-
-
     length = length if length else len(metadata_list)
     for i in range(length):
         metadata = metadata_list[i]
@@ -117,5 +115,3 @@ def generate_validation_image_with_medclip(
             
 
         print(f"{i+1}/{length} image saved...")
-        break
-        i += 1
