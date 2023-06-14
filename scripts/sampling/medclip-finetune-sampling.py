@@ -67,7 +67,7 @@ if __name__ == "__main__":
     device = "cuda:1"
 
     # components reload
-    medclip_model = MedCLIPModelV2(checkpoint="pretrained_models/medclip-pretrained/medclip")
+    medclip_model = MedCLIPModelV2(checkpoint="pretrained_models/medclip/medclip-pretrained")
     text_model = medclip_model.text_model
     tokenizer = text_model.tokenizer
     tokenizer.model_max_length = 256

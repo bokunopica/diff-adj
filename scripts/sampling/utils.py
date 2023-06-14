@@ -82,7 +82,7 @@ def generate_validation_image_with_medclip(
     # medclip processor and model
     processor = MedCLIPProcessorV2(image_size=512)
     model = MedCLIPModel(vision_cls=MedCLIPVisionModelViT, checkpoint='pretrained_models/medclip/medclip-vit-pretrained')
-    model.to('cuda')
+    model.to(device)
 
     length = length if length else len(metadata_list)
     for i in range(length):

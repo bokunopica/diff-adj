@@ -1,15 +1,14 @@
 import os
 from diffusers import AutoencoderKL, StableDiffusionPipeline, UNet2DConditionModel
 from transformers import AutoTokenizer, AutoModel
-from utils import generate_validation_image
-
+from utils import generate_validation_image, generate_validation_image_with_medclip
 
 
 if __name__ == "__main__":
     base_model_id = "CompVis/stable-diffusion-v1-4"
     pretrained_model = "cxr-bert-sd-finetune"
     results_folder = "results"
-    device = "cuda"
+    device = "cuda:1"
     # components reload
     tokenizer = AutoTokenizer.from_pretrained(
         f"pretrained_models/{pretrained_model}/tokenizer",
@@ -45,5 +44,12 @@ if __name__ == "__main__":
 
     if not os.path.exists(save_path):
         os.mkdir(save_path)
-        
-    generate_validation_image(pipe, save_path)
+
+    # generate_validation_image(pipe, save_path)
+    generate_validation_image_with_medclip(
+        pipe,
+        save_path,
+        device,
+        each_samples_per_impression=4,
+        length=1000,
+    )

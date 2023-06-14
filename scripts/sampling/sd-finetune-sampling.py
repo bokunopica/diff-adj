@@ -9,7 +9,7 @@ from diffusers import StableDiffusionPipeline
 if __name__ == "__main__":
     results_folder = "results"
     pretrained_model = "sd-finetune"
-    device = "cuda"
+    device = "cuda:0"
 
     pipe = StableDiffusionPipeline.from_pretrained(
         f"pretrained_models/{pretrained_model}"
@@ -22,4 +22,10 @@ if __name__ == "__main__":
         os.mkdir(save_path)
 
     # generate_four_validation_image(pipe, save_path)
-    generate_validation_image_with_medclip(pipe, save_path, device, each_samples_per_impression=8, length=1000)
+    generate_validation_image_with_medclip(
+        pipe,
+        save_path,
+        device,
+        each_samples_per_impression=4,
+        length=1000,
+    )
