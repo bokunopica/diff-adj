@@ -112,7 +112,7 @@ def generate_validation_image_with_medclip(
         with torch.no_grad():
             outputs = model(**inputs)
             logits_per_text = outputs["logits_per_text"]
-            results = softmax.to(device)(logits_per_text, dim=1).tolist()
+            results = softmax(logits_per_text, dim=1).tolist()
 
         _idx = results[0].index(max(results[0]))
         save_image = gen_image_list[_idx]

@@ -9,18 +9,19 @@ from medclip import (
     MedCLIPTextModel,
     MedCLIPModel,
     MedCLIPVisionModel,
-    MedCLIPVisionModelViT
+    MedCLIPVisionModelViT,
 )
 
 
-
 class MedCLIPProcessorV2(CLIPProcessor):
-    '''
+    """
     A processor that takes input images and texts and provides inputs for
     `MedCLIPModel`.
-    '''
+    """
+
     feature_extractor_class = "CLIPFeatureExtractor"
     tokenizer_class = ("BertTokenizer", "BertTokenizerFast")
+
     def __init__(self, image_size):
         feature_extractor = CLIPImageProcessor(size=image_size)
         tokenizer = AutoTokenizer.from_pretrained(constants.BERT_TYPE)
@@ -71,13 +72,45 @@ class MedCLIPModelV2(MedCLIPModel):
             state_dict = torch.load(os.path.join(checkpoint, constants.WEIGHTS_NAME))
             self.load_state_dict(state_dict)
             print("load model weight from:", checkpoint)
-        
+
         self.device = device
 
-        def encode_text(self, input_ids=None, attention_mask=None):
-            input_ids = input_ids.to(self.device)
-            if attention_mask is not None:
-                attention_mask = attention_mask.to(self.device)
-            text_embeds = self.text_model(input_ids, attention_mask)
-            text_embeds = text_embeds / text_embeds.norm(dim=-1, keepdim=True)
-            return text_embeds
+    def encode_text(self, input_ids=None, attention_mask=None):
+        input_ids = input_ids.to(self.device)
+        if attention_mask is not None:
+            attention_mask = attention_mask.to(self.device)
+        text_embeds = self.text_model(input_ids, attention_mask)
+        text_embeds = text_embeds / text_embeds.norm(dim=-1, keepdim=True)
+        return text_embeds
+
+    def forward(
+        self,
+        input_ids=None,
+        pixel_values=None,
+        attention_mask=None,
+        return_loss=None,
+        **kwargs,
+    ):
+        input_ids = input_ids.to(self.device)
+        if attention_mask is not None:
+            attention_mask = attention_mask.to(self.device)
+        pixel_values = pixel_values.to(self.device)
+
+        img_embeds = self.encode_image(pixel_values)
+        text_embeds = self.encode_text(input_ids, attention_mask)
+
+        logits_per_image = self.compute_logits(img_embeds, text_embeds)
+        logits_per_text = logits_per_image.t()
+
+        if return_loss:
+            loss = self.clip_loss(logits_per_text)
+        else:
+            loss = None
+
+        return {
+            "img_embeds": img_embeds,
+            "text_embeds": text_embeds,
+            "logits": logits_per_image,
+            "loss_value": loss,
+            "logits_per_text": logits_per_text,
+        }
