@@ -46,6 +46,7 @@ class MedCLIPTextModelV2(MedCLIPTextModel):
 class MedCLIPModelV2(MedCLIPModel):
     def __init__(
         self,
+        device,
         vision_cls=MedCLIPVisionModel,
         checkpoint=None,
         vision_checkpoint=None,
@@ -70,3 +71,13 @@ class MedCLIPModelV2(MedCLIPModel):
             state_dict = torch.load(os.path.join(checkpoint, constants.WEIGHTS_NAME))
             self.load_state_dict(state_dict)
             print("load model weight from:", checkpoint)
+        
+        self.device = device
+
+        def encode_text(self, input_ids=None, attention_mask=None):
+            input_ids = input_ids.to(self.device)
+            if attention_mask is not None:
+                attention_mask = attention_mask.to(self.device)
+            text_embeds = self.text_model(input_ids, attention_mask)
+            text_embeds = text_embeds / text_embeds.norm(dim=-1, keepdim=True)
+            return text_embeds

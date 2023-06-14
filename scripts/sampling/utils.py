@@ -1,7 +1,7 @@
 import os
 import io
 import json
-from medclip_adjustment import MedCLIPProcessorV2
+from medclip_adjustment import MedCLIPProcessorV2, MedCLIPModelV2
 from medclip import (
     MedCLIPModel,
     MedCLIPVisionModelViT,
@@ -9,7 +9,6 @@ from medclip import (
 import torch
 from torch import softmax
 import random
-
 
 
 def read_jsonl(file_path):
@@ -70,7 +69,8 @@ def generate_validation_image_with_medclip(
     save_path,
     device,
     each_samples_per_impression=4,
-    length=None
+    length=None,
+    start=0,
 ):
     validation_path = "/run/media/mimic-pa-512/valid"
     metadata_path = f"{validation_path}/metadata.jsonl"
@@ -81,11 +81,16 @@ def generate_validation_image_with_medclip(
 
     # medclip processor and model
     processor = MedCLIPProcessorV2(image_size=512)
-    model = MedCLIPModel(vision_cls=MedCLIPVisionModelViT, checkpoint='pretrained_models/medclip/medclip-vit-pretrained')
+    model = MedCLIPModelV2(
+        device=device,
+        vision_cls=MedCLIPVisionModelViT,
+        checkpoint="pretrained_models/medclip/medclip-vit-pretrained",
+    )
+    model.vision_model.to(device)
     model.to(device)
 
     length = length if length else len(metadata_list)
-    for i in range(length):
+    for i in range(start, length):
         metadata = metadata_list[i]
         impression = metadata.get("impression", "")
         file_name = metadata.get("file_name", "")
@@ -99,19 +104,18 @@ def generate_validation_image_with_medclip(
             gen_image_list.append(image)
 
         inputs = processor(
-            text=[impression], 
-            images=gen_image_list, 
-            return_tensors="pt", 
+            text=[impression],
+            images=gen_image_list,
+            return_tensors="pt",
             padding=True,
-        )
+        ).to(device)
         with torch.no_grad():
             outputs = model(**inputs)
-            logits_per_text = outputs['logits_per_text']
-            results = softmax(logits_per_text, dim=1).tolist()
+            logits_per_text = outputs["logits_per_text"]
+            results = softmax.to(device)(logits_per_text, dim=1).tolist()
 
         _idx = results[0].index(max(results[0]))
         save_image = gen_image_list[_idx]
         save_image.save(f"{save_path}/{file_name}")
-            
 
         print(f"{i+1}/{length} image saved...")
