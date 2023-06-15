@@ -1,5 +1,5 @@
 import os
-import io
+import pandas as pd
 import json
 from medclip_adjustment import MedCLIPProcessorV2, MedCLIPModelV2
 from medclip import (
@@ -9,6 +9,24 @@ from medclip import (
 import torch
 from torch import softmax
 import random
+
+
+DISEASES = [
+    "Atelectasis",
+    "Cardiomegaly",
+    "Consolidation",
+    "Edema",
+    "Enlarged Cardiomediastinum",
+    "Fracture",
+    "Lung Lesion",
+    "Lung Opacity",
+    "No Finding",
+    "Pleural Effusion",
+    "Pleural Other",
+    "Pneumonia",
+    "Pneumothorax",
+    "Support Devices",
+]
 
 
 def read_jsonl(file_path):
@@ -71,13 +89,26 @@ def generate_validation_image_with_medclip(
     each_samples_per_impression=4,
     length=None,
     start=0,
+    length_per_disease=None,
 ):
     validation_path = "/run/media/mimic-pa-512/valid"
     metadata_path = f"{validation_path}/metadata.jsonl"
-    metadata_list = read_jsonl(metadata_path)
-
+    full_metadata_list = read_jsonl(metadata_path)
     random.seed(111)
-    random.shuffle(metadata_list)
+    random.shuffle(full_metadata_list)
+
+    if length_per_disease:
+        # 每个疾病挑选50种
+        metadata_list = []
+        for metadata in full_metadata_list:
+            df_label = pd.read_csv("/run/media/mimic-cxr-jpg/2.0.0/mimic-cxr-2.0.0-negbio.csv")
+            df_dicom = pd.read_csv("/run/media/mimic-cxr-jpg/2.0.0/mimic-cxr-2.0.0-metadata.csv")
+            
+            pass
+        length = len(metadata_list)
+    else:
+        metadata_list = full_metadata_list
+        length = length if length else len(metadata_list)
 
     # medclip processor and model
     processor = MedCLIPProcessorV2(image_size=512)
@@ -88,8 +119,6 @@ def generate_validation_image_with_medclip(
     )
     model.vision_model.to(device)
     model.to(device)
-
-    length = length if length else len(metadata_list)
     for i in range(start, length):
         metadata = metadata_list[i]
         impression = metadata.get("impression", "")
@@ -102,6 +131,10 @@ def generate_validation_image_with_medclip(
             # PIL.Image RGB mode
             image = pipe(prompt=impression, height=512, width=512).images[0]
             gen_image_list.append(image)
+            split_file_name = file_name.split(".")
+            image.save(
+                f"{save_path}/{split_file_name[0]}_{'%d'%j}.{split_file_name[1]}"
+            )
 
         inputs = processor(
             text=[f"A photo of a chest xray"],
@@ -109,6 +142,7 @@ def generate_validation_image_with_medclip(
             return_tensors="pt",
             padding=True,
         ).to(device)
+
         with torch.no_grad():
             outputs = model(**inputs)
             logits_per_text = outputs["logits_per_text"]
