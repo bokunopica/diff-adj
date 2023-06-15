@@ -54,5 +54,5 @@ if __name__ == "__main__":
         save_path,
         device,
         each_samples_per_impression=4,
-        length=30,
+        length_per_disease=50
     )
