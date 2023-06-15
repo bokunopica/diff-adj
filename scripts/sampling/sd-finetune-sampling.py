@@ -27,6 +27,5 @@ if __name__ == "__main__":
         save_path,
         device,
         each_samples_per_impression=4,
-        length=1000,
-        start=83
+        length=30,
     )

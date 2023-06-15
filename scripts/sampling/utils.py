@@ -104,7 +104,7 @@ def generate_validation_image_with_medclip(
             gen_image_list.append(image)
 
         inputs = processor(
-            text=[impression],
+            text=[f"A photo of a chest xray"],
             images=gen_image_list,
             return_tensors="pt",
             padding=True,
