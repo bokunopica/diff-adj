@@ -96,19 +96,38 @@ def generate_validation_image_with_medclip(
     full_metadata_list = read_jsonl(metadata_path)
     random.seed(111)
     random.shuffle(full_metadata_list)
+    random.shuffle(DISEASES)
+    df_meta = pd.read_csv(metadata_path.replace('jsonl', 'csv'))
+
 
     if length_per_disease:
         # 每个疾病挑选50种
         metadata_list = []
-        for metadata in full_metadata_list:
-            df_label = pd.read_csv("/run/media/mimic-cxr-jpg/2.0.0/mimic-cxr-2.0.0-negbio.csv")
-            df_dicom = pd.read_csv("/run/media/mimic-cxr-jpg/2.0.0/mimic-cxr-2.0.0-metadata.csv")
-            
-            pass
+        df_meta.head()
+        existed_file_name_list = []
+        for disease in DISEASES:
+            single_disease_file_name_list = df_meta[df_meta[disease]==True]['file_name'].to_list()
+            random.shuffle(single_disease_file_name_list)
+            i = 0
+            for file_name in single_disease_file_name_list:
+                if file_name not in existed_file_name_list:
+                    existed_file_name_list.append(file_name)
+                    row = df_meta[df_meta['file_name']==file_name]
+                    metadata_list.append({
+                        "file_name": file_name,
+                        "impression": row['impression'].to_list()[0],
+                        "disease": disease
+                    })
+                    i+=1
+                if i>=length_per_disease:
+                    break
         length = len(metadata_list)
     else:
         metadata_list = full_metadata_list
         length = length if length else len(metadata_list)
+
+    df_meta_filtered = pd.DataFrame(metadata_list)
+    df_meta_filtered.to_csv(f"{save_path}/metadata.csv")
 
     # medclip processor and model
     processor = MedCLIPProcessorV2(image_size=512)
@@ -123,6 +142,8 @@ def generate_validation_image_with_medclip(
         metadata = metadata_list[i]
         impression = metadata.get("impression", "")
         file_name = metadata.get("file_name", "")
+        disease = metadata.get("disease")
+        disease_file_name = f"{disease}_{file_name}"
         full_file_path = f"{validation_path}/{file_name}"
         if not os.path.exists(full_file_path):
             continue
@@ -131,13 +152,16 @@ def generate_validation_image_with_medclip(
             # PIL.Image RGB mode
             image = pipe(prompt=impression, height=512, width=512).images[0]
             gen_image_list.append(image)
-            split_file_name = file_name.split(".")
+            split_file_name = disease_file_name.split(".")
             image.save(
                 f"{save_path}/{split_file_name[0]}_{'%d'%j}.{split_file_name[1]}"
             )
 
         inputs = processor(
-            text=[f"A photo of a chest xray"],
+            text=[
+                f"A photo of a chest xray",
+                f"{impression}"
+            ],
             images=gen_image_list,
             return_tensors="pt",
             padding=True,
@@ -145,11 +169,17 @@ def generate_validation_image_with_medclip(
 
         with torch.no_grad():
             outputs = model(**inputs)
-            logits_per_text = outputs["logits_per_text"]
-            results = softmax(logits_per_text, dim=1).tolist()
+            logits_per_text = outputs["logits_per_text"].tolist()
+            result_static = logits_per_text[0]
+            result_impression = logits_per_text[1]
 
-        _idx = results[0].index(max(results[0]))
-        save_image = gen_image_list[_idx]
-        save_image.save(f"{save_path}/{file_name}")
+        _idx_static = result_static.index(max(result_static))
+        _idx_impression = result_impression.index(max(result_impression))
+        static_prompt_image = gen_image_list[_idx_static]
+        impression_prompt_image = gen_image_list[_idx_impression]
+
+        split_file_name = disease_file_name.split(".")
+        static_prompt_image.save(f"{save_path}/{split_file_name[0]}_static.{split_file_name[1]}")
+        impression_prompt_image.save(f"{save_path}/{split_file_name[0]}_impression.{split_file_name[1]}")
 
         print(f"{i+1}/{length} image saved...")
