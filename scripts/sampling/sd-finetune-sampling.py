@@ -3,12 +3,13 @@ from utils import (
     generate_validation_image,
     generate_four_validation_image,
     generate_validation_image_with_medclip,
+    generate_images
 )
 from diffusers import StableDiffusionPipeline
 
 if __name__ == "__main__":
     results_folder = "results"
-    pretrained_model = "sd-finetune"
+    pretrained_model = "60k/sd-finetune"
     device = "cuda:0"
 
     pipe = StableDiffusionPipeline.from_pretrained(
@@ -29,3 +30,16 @@ if __name__ == "__main__":
         each_samples_per_impression=4,
         length_per_disease=50,
     )
+    # generate_images(
+    #     pipe,
+    #     save_path,
+    #     "Small right-sided plerual effusion",
+    #     20
+    # )
+
+    # generate_images(
+    #     pipe,
+    #     save_path,
+    #     "Big right-sided plerual effusion",
+    #     20
+    # )

@@ -1,5 +1,5 @@
 ### 训练过程
-lr=1e-4, ts=12.5k, data=30k
+lr=1e-4, ts=12.5k, data=30k, batch_size = 1
 1. 微调Stable Diffusion [已调通]
 2. 换TextEncoder RadBert [已调通]
 3. 换TextEncoder CXR-BERT-specialized [已调通]

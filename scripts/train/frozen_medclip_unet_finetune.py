@@ -546,7 +546,7 @@ def main():
         # text_encoder = CLIPTextModel.from_pretrained(
         #     args.pretrained_model_name_or_path, subfolder="text_encoder", revision=args.revision
         # )
-        medclip_model = MedCLIPModelV2(checkpoint="pretrained_models/medclip-pretrained/medclip")
+        medclip_model = MedCLIPModelV2(checkpoint="pretrained_models/medclip/medclip-pretrained")
         text_model = medclip_model.text_model
         tokenizer = text_model.tokenizer
         tokenizer.model_max_length = 256

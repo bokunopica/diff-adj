@@ -94,7 +94,7 @@ def generate_validation_image_with_medclip(
     validation_path = "/run/media/mimic-pa-512/valid"
     metadata_path = f"{validation_path}/metadata.jsonl"
     full_metadata_list = read_jsonl(metadata_path)
-    random.seed(111)
+    random.seed(222)
     random.shuffle(full_metadata_list)
     random.shuffle(DISEASES)
     df_meta = pd.read_csv(metadata_path.replace('jsonl', 'csv'))
@@ -182,4 +182,13 @@ def generate_validation_image_with_medclip(
         static_prompt_image.save(f"{save_path}/{split_file_name[0]}_static.{split_file_name[1]}")
         impression_prompt_image.save(f"{save_path}/{split_file_name[0]}_impression.{split_file_name[1]}")
 
+        print(f"{i+1}/{length} image saved...")
+
+
+
+def generate_images(pipe, save_path, impression, length):
+    for i in range(length):
+        file_name = "example_%s_%03d.png" % (impression, i)
+        image = pipe(prompt=impression, height=512, width=512).images[0]
+        image.save(f"{save_path}/{file_name}")
         print(f"{i+1}/{length} image saved...")

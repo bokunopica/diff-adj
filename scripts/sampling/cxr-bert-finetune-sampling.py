@@ -1,12 +1,16 @@
 import os
 from diffusers import AutoencoderKL, StableDiffusionPipeline, UNet2DConditionModel
 from transformers import AutoTokenizer, AutoModel
-from utils import generate_validation_image, generate_validation_image_with_medclip
+from utils import (
+    generate_validation_image,
+    generate_validation_image_with_medclip,
+    generate_images,
+)
 
 
 if __name__ == "__main__":
     base_model_id = "CompVis/stable-diffusion-v1-4"
-    pretrained_model = "cxr-bert-sd-finetune"
+    pretrained_model = "60k/cxr-bert-sd-finetune"
     results_folder = "results"
     device = "cuda:1"
     # components reload
@@ -53,3 +57,18 @@ if __name__ == "__main__":
         each_samples_per_impression=4,
         length_per_disease=50,
     )
+    # generate_images(
+    #     pipe,
+    #     save_path,
+    #     "Small right-sided plerual effusion",
+    #     20
+    # )
+
+    # generate_images(
+    #     pipe,
+    #     save_path,
+    #     "Big right-sided plerual effusion",
+    #     20
+    # )
+
+
