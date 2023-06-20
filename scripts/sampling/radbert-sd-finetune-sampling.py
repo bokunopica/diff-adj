@@ -7,7 +7,7 @@ from utils import generate_validation_image, generate_validation_image_with_medc
 
 if __name__ == "__main__":
     base_model_id = "CompVis/stable-diffusion-v1-4"
-    pretrained_model = "radbert-sd-finetune"
+    pretrained_model = "60k/radbert-sd-finetune"
     results_folder = "results"
     device = "cuda:0"
 
@@ -60,12 +60,12 @@ if __name__ == "__main__":
         pipe,
         save_path,
         "Small right-sided plerual effusion",
-        8
+        20
     )
 
     generate_images(
         pipe,
         save_path,
         "Big right-sided plerual effusion",
-        8
+        20
     )
