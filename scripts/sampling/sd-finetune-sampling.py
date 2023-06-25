@@ -23,13 +23,13 @@ if __name__ == "__main__":
         os.mkdir(save_path)
 
     # generate_four_validation_image(pipe, save_path)
-    # generate_validation_image_with_medclip(
-    #     pipe,
-    #     save_path,
-    #     device,
-    #     each_samples_per_impression=4,
-    #     length_per_disease=50,
-    # )
+    generate_validation_image_with_medclip(
+        pipe,
+        save_path,
+        device,
+        each_samples_per_impression=4,
+        length_per_disease=50,
+    )
     # generate_images(
     #     pipe,
     #     save_path,
@@ -37,9 +37,9 @@ if __name__ == "__main__":
     #     20
     # )
 
-    generate_images(
-        pipe,
-        save_path,
-        "cardiomegaly in this photo",
-        1
-    )
+    # generate_images(
+    #     pipe,
+    #     save_path,
+    #     "cardiomegaly in this photo",
+    #     1
+    # )
