@@ -48,24 +48,24 @@ if __name__ == "__main__":
     if not os.path.exists(save_path):
         os.mkdir(save_path)
         
-    # generate_validation_image(pipe, save_path)
-    # generate_validation_image_with_medclip(
+    generate_validation_image(pipe, save_path)
+    generate_validation_image_with_medclip(
+        pipe,
+        save_path,
+        device,
+        each_samples_per_impression=8,
+        length_per_disease=50
+    )
+    # generate_images(
     #     pipe,
     #     save_path,
-    #     device,
-    #     each_samples_per_impression=4,
-    #     length_per_disease=50
+    #     "Small right-sided plerual effusion",
+    #     20
     # )
-    generate_images(
-        pipe,
-        save_path,
-        "Small right-sided plerual effusion",
-        20
-    )
 
-    generate_images(
-        pipe,
-        save_path,
-        "Big right-sided plerual effusion",
-        20
-    )
+    # generate_images(
+    #     pipe,
+    #     save_path,
+    #     "Big right-sided plerual effusion",
+    #     20
+    # )

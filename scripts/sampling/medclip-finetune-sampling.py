@@ -64,7 +64,7 @@ if __name__ == "__main__":
     base_model_id = "CompVis/stable-diffusion-v1-4"
     pretrained_model = "60k/medclip-finetune"
     results_folder = "results"
-    device = "cuda:1"
+    device = "cuda:0"
 
     # components reload
     medclip_model = MedCLIPModelV2(checkpoint="pretrained_models/medclip/medclip-pretrained")
@@ -99,23 +99,23 @@ if __name__ == "__main__":
         os.mkdir(save_path)
         
     # generate_validation_image(pipe, save_path)
-    # generate_validation_image_with_medclip(
+    generate_validation_image_with_medclip(
+        pipe,
+        save_path,
+        device,
+        each_samples_per_impression=8,
+        length_per_disease=50
+    )
+    # generate_images(
     #     pipe,
     #     save_path,
-    #     device,
-    #     each_samples_per_impression=4,
-    #     length_per_disease=50
+    #     "Small right-sided plerual effusion",
+    #     20
     # )
-    generate_images(
-        pipe,
-        save_path,
-        "Small right-sided plerual effusion",
-        20
-    )
 
-    generate_images(
-        pipe,
-        save_path,
-        "Big right-sided plerual effusion",
-        20
-    )
+    # generate_images(
+    #     pipe,
+    #     save_path,
+    #     "Big right-sided plerual effusion",
+    #     20
+    # )

@@ -41,7 +41,7 @@ def read_jsonl(file_path):
 
 
 def generate_validation_image(pipe, save_path):
-    validation_path = "/run/media/mimic-pa-512/valid"
+    validation_path = "/home/qianq/data/mimic-pa-512/mimic-pa-512/valid"
     metadata_path = f"{validation_path}/metadata.jsonl"
     metadata_list = read_jsonl(metadata_path)
 
@@ -60,7 +60,7 @@ def generate_validation_image(pipe, save_path):
 
 
 def generate_four_validation_image(pipe, save_path):
-    validation_path = "/run/media/mimic-pa-512/valid"
+    validation_path = "/home/qianq/data/mimic-pa-512/mimic-pa-512/valid"
     metadata_path = f"{validation_path}/metadata.jsonl"
     metadata_list = read_jsonl(metadata_path)
 
@@ -91,7 +91,17 @@ def generate_validation_image_with_medclip(
     start=0,
     length_per_disease=None,
 ):
-    validation_path = "/run/media/mimic-pa-512/valid"
+    """
+    params:
+        pipe: model
+        save_path: 保存路径
+        device: gpu
+        each_samples_per_impression: 每个impression对应生成多少张图像供medclip做滤波
+        start: 数据偏移量
+        length: 数据个数
+        length_per_disease: 可选 每种疾病的个数
+    """
+    validation_path = "/home/qianq/data/mimic-pa-512/mimic-pa-512/valid"
     metadata_path = f"{validation_path}/metadata.jsonl"
     full_metadata_list = read_jsonl(metadata_path)
     random.seed(222)
@@ -173,6 +183,11 @@ def generate_validation_image_with_medclip(
             result_static = logits_per_text[0]
             result_impression = logits_per_text[1]
 
+        # TODO 这里做medclip logits的阈值处理
+        for balabal in result_static:
+            if balabal > 0.5:
+                # 处理
+                pass
         _idx_static = result_static.index(max(result_static))
         _idx_impression = result_impression.index(max(result_impression))
         static_prompt_image = gen_image_list[_idx_static]
