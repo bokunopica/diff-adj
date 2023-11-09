@@ -8,8 +8,10 @@ processor = MedCLIPProcessor()
 # processor.feature_extractor.convert_rgb = convert_to_rgb
 image = Image.open('/home/qianq/mycodes/diff-adj/results/random/cxr-bert-sd-finetune/2c6767f3-38084bdb-4c09377c-51ca8ed8-6c932992.jpg')
 inputs = processor(
-    text=["lungs remain severely hyperinflated with upper lobe emphysema", 
-        "opacity left costophrenic angle is new since prior exam ___ represent some loculated fluid cavitation unlikely"], 
+    text=[
+        "lungs remain severely hyperinflated with upper lobe emphysema", 
+        "opacity left costophrenic angle is new since prior exam ___ represent some loculated fluid cavitation unlikely",
+    ], 
     images=image, 
     return_tensors="pt", 
     padding=True
